@@ -15,7 +15,7 @@ services:
       - 5000:5000
     develop:
       watch:
-        - action: sync+restart
+        - action: sync
           path: .
           target: /app
 # The commented out section below is an example of how to define a PostgreSQL

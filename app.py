@@ -3,4 +3,8 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello_world():
-    return 'Hello, Docker! hi!!'
+    return 'Hello, Docker, what up'
+
+@app.route('/hello')
+def whattup():
+    return '<p>Hi</p>'
