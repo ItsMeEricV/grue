@@ -7,4 +7,4 @@ def hello_world():
 
 @app.route('/hello')
 def whattup() -> str:
-    return '<p>Hello</p>'
+    return '<p>Hello hi</p>'

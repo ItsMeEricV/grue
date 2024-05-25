@@ -7,10 +7,13 @@
 # You can add other services your application may depend on here, such as a
 # database or a cache. For examples, see the Awesome Compose repository:
 # https://github.com/docker/awesome-compose
+
 services:
   server:
     build:
       context: .
+      args:
+      - DEBUG=$DEBUG
     ports:
       - 5111:5000
     develop:

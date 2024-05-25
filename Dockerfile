@@ -18,6 +18,10 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
+# Set the debug argument when invoking Python based on the environment variable
+ARG DEBUG=''
+ENV DEBUG=${DEBUG}
+
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/go/dockerfile-user-best-practices/
 ARG UID=10001
@@ -48,4 +52,4 @@ COPY . .
 EXPOSE 5000
 
 # Run the application.
-CMD python3 -m flask run --host=0.0.0.0 --debug
+CMD python3 -m flask run --host=0.0.0.0 ${DEBUG}
