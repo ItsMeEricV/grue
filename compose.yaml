@@ -12,7 +12,7 @@ services:
     build:
       context: .
     ports:
-      - 5000:5000
+      - 5111:5000
     develop:
       watch:
         - action: sync
