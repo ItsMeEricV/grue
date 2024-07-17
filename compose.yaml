@@ -61,6 +61,11 @@ services:
     ports:
       - "5050:80"
     restart: always
+    user: "${UID}:${GID}"
+    # to persist the server connection data need to share the Docker volume with the pgadmin container
+    # https://stackoverflow.com/questions/61087782/pgadmin-4-save-server-connection-details
+    volumes:
+      - db-data:/var/lib/pgadmin
 volumes:
   db-data:
 # secrets:

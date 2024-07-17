@@ -164,5 +164,8 @@ cython_debug/
 # VSCode
 .editorconfig
 
+# pgadmin
+data/
+
 # Ignoring the special test.py file just for fun playing around
 test.py
