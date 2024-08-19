@@ -15,6 +15,10 @@ services:
       context: .
       args:
       - DEBUG=${DEBUG}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PW=${POSTGRES_PW}
     ports:
       - 5111:5000
     develop:

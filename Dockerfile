@@ -22,6 +22,16 @@ WORKDIR /app
 ARG DEBUG=''
 ENV DEBUG=${DEBUG}
 
+# DB connection environment vars
+ARG POSTGRES_HOST
+ENV POSTGRES_HOST=${POSTGRES_HOST}
+ARG POSTGRES_DB=
+ENV POSTGRES_DB=${POSTGRES_DB}
+ARG POSTGRES_USER
+ENV POSTGRES_USER=${POSTGRES_USER}
+ARG POSTGRES_PW
+ENV POSTGRES_PW=${POSTGRES_PW}
+
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/go/dockerfile-user-best-practices/
 ARG UID=10001
