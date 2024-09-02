@@ -4,9 +4,12 @@
 
 {% block head %}
 <style>
+	@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
 	body {
 		background-color: #f8f9fa;
 		position: relative;
+		font-family: 'Poppins', sans-serif;
 	}
 
 	body::after {
@@ -42,11 +45,34 @@
 		color: white;
 		border-bottom: none;
 		border-radius: 10px 10px 0 0;
+		text-align: center;
+		padding: 20px;
+	}
+
+	.card-header h3 {
+		margin: 0;
+		font-weight: 700;
+	}
+
+	.card-body {
+		padding: 30px;
+	}
+
+	.form-group label {
+		font-weight: 600;
+	}
+
+	.form-control {
+		border-radius: 5px;
 	}
 
 	.btn-primary {
 		background-color: #007bff;
 		border: none;
+		border-radius: 5px;
+		padding: 10px;
+		font-size: 16px;
+		font-weight: 700;
 	}
 
 	.btn-primary:hover {
@@ -60,7 +86,7 @@
 	<div class="row justify-content-center">
 		<div class="col-md-6">
 			<div class="card">
-				<div class="card-header text-center">
+				<div class="card-header">
 					<h3>Login</h3>
 				</div>
 				<div class="card-body">
