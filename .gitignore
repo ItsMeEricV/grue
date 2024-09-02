@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
 
 # C extensions
 *.so
@@ -169,3 +170,6 @@ data/
 
 # Ignoring the special test.py file just for fun playing around
 test.py
+
+# lol mac
+.DS_Store
