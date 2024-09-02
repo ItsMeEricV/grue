@@ -19,6 +19,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PW=${POSTGRES_PW}
+      - FLASK_APP=${FLASK_APP}
     ports:
       - 5111:5000
     develop:
