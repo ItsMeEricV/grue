@@ -5,6 +5,7 @@ from config import Config
 from .blueprints.main import main_bp
 from .blueprints.auth import auth_bp
 
+
 # TEMP
 import sys
 
