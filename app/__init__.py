@@ -1,16 +1,26 @@
 from flask import Flask
-import sys
+from flask_sqlalchemy import SQLAlchemy
+from config import Config
 from .blueprints.main import main_bp
 from .blueprints.auth import auth_bp
+
+# TEMP
+import sys
+
+db = SQLAlchemy()
 
 # App initialization
 def create_app():
     app = Flask(__name__)
+    app.config.from_object(Config)
+
+    db.init_app(app)
 
     # Import and register blueprints
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
 
+    # TEMP
     # Debug route to print all routes
     @app.route('/debug')
     def debug_routes():

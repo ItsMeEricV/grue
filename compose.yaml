@@ -71,8 +71,10 @@ services:
     # https://stackoverflow.com/questions/61087782/pgadmin-4-save-server-connection-details
     volumes:
       - db-data:/var/lib/pgadmin
+      - pgadmin-sessions:/var/lib/pgadmin/sessions
 volumes:
   db-data:
+  pgadmin-sessions:
 # secrets:
 #   db-password:
 #     file: db/password.txt
