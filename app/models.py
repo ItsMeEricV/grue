@@ -1,8 +1,7 @@
 import uuid
 from sqlalchemy.dialects.postgresql import UUID
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy()
+#from flask_sqlalchemy import SQLAlchemy
+from . import db
 
 class User(db.Model):
     __tablename__ = 'users'
