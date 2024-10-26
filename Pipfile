@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 flask = "==3.0.3"
 flask-sqlalchemy = "*"
+python-dotenv = "*"
+flask-migrate = "*"
 
 [dev-packages]
 psycopg2-binary = "*"
