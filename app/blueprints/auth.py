@@ -23,7 +23,8 @@ def login():
             return redirect(url_for("main.index"))
         else:
             return "Invalid credentials", 401
-    return render_template("login.html")
+    google_client_id = current_app.config["GOOGLE_CLIENT_ID"]
+    return render_template("login.html", google_client_id=google_client_id)
 
 
 @auth_bp.route("/login/google")
