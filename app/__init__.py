@@ -1,17 +1,17 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from config import Config
-from .blueprints.main import main_bp
-from .blueprints.auth import auth_bp
+from flask_sqlalchemy import SQLAlchemy
 
-# TEMP
-#import sys
+from config import Config
+
+from .auth.oauth import register_oauth
+from .blueprints.auth import auth_bp
+from .blueprints.main import main_bp
 
 db = SQLAlchemy()
 migrate = Migrate()
 
-# App initialization
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -19,6 +19,7 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
+    register_oauth(app)
     # Register DB models
     register_models()
 
@@ -26,16 +27,10 @@ def create_app():
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
 
-    # TEMP
-    # Debug route to print all routes
-    # @app.route('/debug')
-    # def debug_routes():
-    #     print(app.url_map, file=sys.stderr)
-    #     return 'hi121212'
-
     return app
 
-# Import models to register them with SQLAlchemy
+
 def register_models() -> None:
     from .models import User
+
     _ = User
