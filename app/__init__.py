@@ -4,12 +4,12 @@ from flask_sqlalchemy import SQLAlchemy
 
 from config import Config
 
+db = SQLAlchemy()
+migrate = Migrate()
+
 from .auth.oauth import register_oauth
 from .blueprints.auth import auth_bp
 from .blueprints.main import main_bp
-
-db = SQLAlchemy()
-migrate = Migrate()
 
 
 def create_app():

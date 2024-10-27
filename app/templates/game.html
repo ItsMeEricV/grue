@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Game time{% endblock %}
+
+{% block content %}
+<h1>You are about to be eaten by a grue</h1>
+
+{% if user is not none %}
+<p>Welcome, {{ user.username }}!</p>
+{% endif %}
+
+{% endblock %}

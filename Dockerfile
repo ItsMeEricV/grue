@@ -31,6 +31,8 @@ ARG GOOGLE_CLIENT_SECRET
 ENV GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
 ARG GOOGLE_CALLBACK
 ENV GOOGLE_CALLBACK=${GOOGLE_CALLBACK}
+ARG ADMIN_USERS
+ENV ADMIN_USERS=${ADMIN_USERS}
 
 # handle the .flaskenv file
 COPY .flaskenv /app/.flaskenv
@@ -56,11 +58,14 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=bind,source=requirements.txt,target=requirements.txt \
     python -m pip install -r requirements.txt
 
-# Switch to the non-privileged user to run the application.
-USER appuser
-
 # Copy the source code into the container.
 COPY . .
+
+# Change permissions of the /app/migrations/versions directory.
+RUN mkdir -p /app/migrations/versions && chmod -R 777 /app/migrations/versions
+
+# Switch to the non-privileged user to run the application.
+USER appuser
 
 # Expose the port that the application listens on.
 EXPOSE 5000
