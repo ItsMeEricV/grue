@@ -8,8 +8,12 @@ flask = "==3.0.3"
 flask-sqlalchemy = "*"
 python-dotenv = "*"
 flask-migrate = "*"
+authlib = "*"
+requests = "*"
 
 [dev-packages]
+isort = "*"
+black = "*"
 psycopg2-binary = "*"
 
 [requires]
