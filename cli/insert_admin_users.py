@@ -8,9 +8,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.models import User
-from config import Config
+from config import MainConfig
 
-engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
+engine = create_engine(MainConfig.SQLALCHEMY_DATABASE_URI)
 
 Session = sessionmaker(bind=engine)
 session = Session()

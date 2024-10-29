@@ -4,12 +4,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import BOOLEAN, UUID, VARCHAR
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from config import Config
+from config import MainConfig
 
 from . import db
 
 Base = declarative_base()
-engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
+engine = create_engine(MainConfig.SQLALCHEMY_DATABASE_URI)
 Session = sessionmaker(bind=engine)
 
 

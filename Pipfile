@@ -15,6 +15,7 @@ requests = "*"
 isort = "*"
 black = "*"
 psycopg2-binary = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.12"
