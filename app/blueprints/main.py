@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template
 
-from ..users.users import get_current_user
+from ..users.users import current_user_is_admin, get_current_user
 
 main_bp = Blueprint("main", __name__)
 
@@ -8,7 +8,7 @@ main_bp = Blueprint("main", __name__)
 @main_bp.context_processor
 def inject_user():
     user = get_current_user()
-    return dict(user=user)
+    return dict(user=user, current_user_is_admin=current_user_is_admin)
 
 
 @main_bp.route("/")

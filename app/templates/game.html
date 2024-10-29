@@ -5,7 +5,7 @@
 {% block content %}
 <h1>You are about to be eaten by a grue</h1>
 
-{% if user is not none %}
+{% if current_user_is_admin() %}
 <p>Welcome, {{ user.username }}!</p>
 {% endif %}
 

@@ -62,7 +62,7 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/login">Login</a>
                 </li>
-                {% if session.user %}
+                {% if current_user_is_admin() %}
                 <li class="nav-item">
                     <a class="nav-link" href="/play">
                         <i class="fas fa-play"></i> Play!

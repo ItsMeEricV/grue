@@ -28,3 +28,9 @@ def get_current_user() -> Optional[User]:
         return None
     user = session.get("user")
     return db_session.query(User).filter_by(email=user.get("email")).first()
+
+
+# Check if the current user is an admin
+def current_user_is_admin() -> bool:
+    user = get_current_user()
+    return user and user.is_admin
