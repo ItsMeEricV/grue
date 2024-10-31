@@ -1,7 +1,7 @@
-from typing import List, Optional
+from typing import List, Optional, Sequence
 
 from flask import session
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 
 from ..models import Session, User
 
@@ -9,7 +9,8 @@ from ..models import Session, User
 Basic user getter functions until we have more need for user CRUD
 """
 
-# Create a session
+# # Create a session
+# db_session = Session()
 db_session = Session()
 
 
@@ -24,7 +25,21 @@ def get_user_by_email_or_phone(
     """
     if not email and not phone:
         raise ValueError("Either email or phone must be provided")
-    return User.query.filter(or_(User.email == email, User.phone == phone)).first()
+    return (
+        db_session.execute(
+            select(User).filter(or_(User.email == email, User.phone == phone))
+        )
+        .scalars()
+        .one_or_none()
+    )
+
+
+# return session.scalars(select(User).order_by(User.id)).first()
+
+
+# return (
+# session.scalars(select(User).filter(or_(User.email == email, User.phone == phone))
+# )
 
 
 def get_all_users() -> List[User]:
@@ -34,8 +49,10 @@ def get_all_users() -> List[User]:
     Returns:
         List[User]: A list of all users
     """
-    users = db_session.query(User).all()
-    return users
+    users: Sequence[User] = (
+        db_session.execute(select(User).order_by(User.id)).scalars().all()
+    )
+    return list(users)
 
 
 def get_current_user() -> Optional[User]:
@@ -47,8 +64,12 @@ def get_current_user() -> Optional[User]:
     """
     if not session.get("user"):
         return None
-    user = session.get("user")
-    return db_session.query(User).filter_by(email=user.get("email")).first()
+    email: str = str(session.get("user").get("email"))
+    return (
+        db_session.execute(select(User).filter(User.email == email))
+        .scalars()
+        .one_or_none()
+    )
 
 
 def current_user_is_admin() -> bool:
@@ -58,5 +79,7 @@ def current_user_is_admin() -> bool:
     Returns:
         bool: True if the current user is an admin, False otherwise
     """
-    user = get_current_user()
-    return user and user.is_admin
+    user: Optional[User] = get_current_user()
+    if not user:
+        return False
+    return user.is_admin

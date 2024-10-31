@@ -2,18 +2,18 @@ from flask import Flask
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
-db = SQLAlchemy()
-migrate = Migrate()
-
 from .auth.oauth import register_oauth
 from .blueprints.auth import auth_bp
 from .blueprints.main import main_bp
+from .models import Base
 
 
 def create_app(config: str) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config)
 
+    db = SQLAlchemy(model_class=Base)
+    migrate = Migrate(app, db)
     db.init_app(app)
     migrate.init_app(app, db)
 
