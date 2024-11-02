@@ -9,8 +9,6 @@ from ..models import Session, User
 Basic user getter functions until we have more need for user CRUD
 """
 
-# # Create a session
-# db_session = Session()
 db_session = Session()
 
 
@@ -32,14 +30,6 @@ def get_user_by_email_or_phone(
         .scalars()
         .one_or_none()
     )
-
-
-# return session.scalars(select(User).order_by(User.id)).first()
-
-
-# return (
-# session.scalars(select(User).filter(or_(User.email == email, User.phone == phone))
-# )
 
 
 def get_all_users() -> List[User]:
