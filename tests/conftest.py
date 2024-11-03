@@ -8,8 +8,7 @@ from sqlalchemy.orm import mapped_column, scoped_session, sessionmaker
 from app import create_app
 from app.models import Base
 
-engine: Engine = create_engine("sqlite:///:memory:")
-Session = sessionmaker(bind=engine)
+# Session = sessionmaker(bind=engine)
 
 
 @pytest.fixture()
@@ -21,6 +20,7 @@ def app():
             "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",  # Override the database URI
         }
     )
+    engine: Engine = app.extensions["engine"]
 
     # other setup can go here
     Base.metadata.create_all(engine)

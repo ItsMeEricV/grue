@@ -19,8 +19,8 @@ def get_engine() -> Engine:
 
 
 # engine: Engine = create_engine(MainConfig.SQLALCHEMY_DATABASE_URI)
-engine: Engine = get_engine()
-Session = sessionmaker(bind=engine)
+# engine: Engine = get_engine()
+# Session = sessionmaker(bind=engine)
 # db_session = Session()
 
 

@@ -1,6 +1,9 @@
 from flask import Flask
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import create_engine
+from sqlalchemy.engine.base import Engine
+from sqlalchemy.orm import sessionmaker
 
 from .auth.oauth import register_oauth
 from .blueprints.auth import auth_bp
@@ -18,6 +21,11 @@ def create_app(config: str) -> Flask:
     migrate.init_app(app, db)
 
     app.extensions["sqlalchemy"] = db
+
+    engine: Engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+    Session = sessionmaker(bind=engine)
+    app.extensions["Session"] = Session
+    app.extensions["engine"] = engine
 
     register_oauth(app)
     # Register DB models

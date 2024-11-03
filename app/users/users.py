@@ -1,6 +1,6 @@
 from typing import List, Optional, Sequence
 
-from flask import session
+from flask import current_app, session
 from sqlalchemy import or_, select
 
 from ..models import Session, User
@@ -9,7 +9,7 @@ from ..models import Session, User
 Basic user getter functions until we have more need for user CRUD
 """
 
-db_session = Session()
+# db_session = Session()
 
 
 def get_user_by_email_or_phone(
@@ -39,6 +39,7 @@ def get_all_users() -> List[User]:
     Returns:
         List[User]: A list of all users
     """
+    db_session = current_app.extensions["Session"]()
     users: Sequence[User] = (
         db_session.execute(select(User).order_by(User.id)).scalars().all()
     )
@@ -52,6 +53,7 @@ def get_current_user() -> Optional[User]:
     Returns:
         Optional[User]: The current user, or None if there is no user in the session
     """
+    db_session = current_app.extensions["Session"]()
     if not session.get("user"):
         return None
     email: str = str(session.get("user").get("email"))
