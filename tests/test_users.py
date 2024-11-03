@@ -1,13 +1,7 @@
-import pytest
 from flask import Flask
-from sqlalchemy import create_engine, select
-from sqlalchemy.engine.base import Engine
-from sqlalchemy.orm import sessionmaker
 
-from app.models import Base, User
+from app.models import User
 from app.users.users import get_all_users
-
-# from .conftest import Session
 
 
 def test_app_context(app: Flask):

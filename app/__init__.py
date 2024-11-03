@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, current_app
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
@@ -19,8 +19,6 @@ def create_app(config: str) -> Flask:
     migrate = Migrate(app, db)
     db.init_app(app)
     migrate.init_app(app, db)
-
-    app.extensions["sqlalchemy"] = db
 
     engine: Engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     Session = sessionmaker(bind=engine)

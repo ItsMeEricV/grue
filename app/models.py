@@ -1,27 +1,9 @@
 import uuid
 from typing import Optional
 
-from flask import current_app
-from sqlalchemy import BigInteger, Boolean, CheckConstraint, create_engine
+from sqlalchemy import BigInteger, Boolean, CheckConstraint
 from sqlalchemy.dialects.postgresql import UUID, VARCHAR
-from sqlalchemy.engine.base import Engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
-
-from config import MainConfig
-
-
-def get_engine() -> Engine:
-    if current_app:
-        return create_engine(current_app.config["SQLALCHEMY_DATABASE_URI"])
-    else:
-        print("HIII")
-        return create_engine("sqlite:///:memory:")
-
-
-# engine: Engine = create_engine(MainConfig.SQLALCHEMY_DATABASE_URI)
-# engine: Engine = get_engine()
-# Session = sessionmaker(bind=engine)
-# db_session = Session()
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):

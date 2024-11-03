@@ -3,13 +3,11 @@ from typing import List, Optional, Sequence
 from flask import current_app, session
 from sqlalchemy import or_, select
 
-from ..models import Session, User
+from ..models import User
 
 """
 Basic user getter functions until we have more need for user CRUD
 """
-
-# db_session = Session()
 
 
 def get_user_by_email_or_phone(
@@ -21,6 +19,7 @@ def get_user_by_email_or_phone(
     Returns:
         Optional[User]: The user, or None if no user was found
     """
+    db_session = current_app.extensions["Session"]()
     if not email and not phone:
         raise ValueError("Either email or phone must be provided")
     return (
@@ -41,7 +40,7 @@ def get_all_users() -> List[User]:
     """
     db_session = current_app.extensions["Session"]()
     users: Sequence[User] = (
-        db_session.execute(select(User).order_by(User.id)).scalars().all()
+        db_session.execute(select(User).order_by(User.username)).scalars().all()
     )
     return list(users)
 
