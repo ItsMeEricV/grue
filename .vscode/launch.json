@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "Python: pytest",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
-      "program": "${file}",
+      "program": "/Users/eric/.local/share/virtualenvs/grue-mNMlPGLB/bin/pytest",
       "args": ["-s"],
       "console": "integratedTerminal",
       "justMyCode": false,
