@@ -20,7 +20,7 @@ class MainConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
-class TestingConfig(Config):
+class TestConfig(Config):
     TESTING = True
     SECRET_KEY = "test"
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"

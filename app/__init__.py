@@ -17,6 +17,8 @@ def create_app(config: str) -> Flask:
     db.init_app(app)
     migrate.init_app(app, db)
 
+    app.extensions["sqlalchemy"] = db
+
     register_oauth(app)
     # Register DB models
     register_models()
