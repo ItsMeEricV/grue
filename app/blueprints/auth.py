@@ -10,7 +10,7 @@ from flask import (
     url_for,
 )
 
-from ..users.users import current_user_is_admin, get_all_users, get_current_user
+from ..users.users import UserStore
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -18,8 +18,8 @@ auth_bp = Blueprint("auth", __name__)
 # TODO: Refactor so we don't have to copy pasta this inject_user across all blueprints
 @auth_bp.context_processor
 def inject_user():
-    user = get_current_user()
-    return dict(user=user, current_user_is_admin=current_user_is_admin)
+    user = UserStore.get_current_user()
+    return dict(user=user, current_user_is_admin=UserStore.current_user_is_admin)
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])

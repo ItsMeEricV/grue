@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template
 
-from ..users.users import current_user_is_admin, get_all_users, get_current_user
+from ..users.users import UserStore
 
 main_bp = Blueprint("main", __name__)
 
@@ -8,9 +8,9 @@ main_bp = Blueprint("main", __name__)
 # TODO: Refactor so we don't have to copy pasta this inject_user across all blueprints
 @main_bp.context_processor
 def inject_user():
-    user = get_current_user()
-    print(get_all_users())
-    return dict(user=user, current_user_is_admin=current_user_is_admin)
+    user = UserStore.get_current_user()
+    print(UserStore.get_all_users())
+    return dict(user=user, current_user_is_admin=UserStore.current_user_is_admin)
 
 
 @main_bp.route("/")
