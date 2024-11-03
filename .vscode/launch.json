@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: pytest",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "/Users/eric/.local/share/virtualenvs/grue-mNMlPGLB/bin/pytest",
+      "args": ["-s"],
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    }
+  ]
+}
