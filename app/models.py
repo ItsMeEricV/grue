@@ -1,7 +1,15 @@
 import uuid
-from typing import Optional
+from typing import List, Optional
 
-from sqlalchemy import BigInteger, Boolean, CheckConstraint, ForeignKey
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    CheckConstraint,
+    ForeignKey,
+    Index,
+    Integer,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import TEXT, UUID, VARCHAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -46,3 +54,86 @@ class Location(Base):
     )
     description: Mapped[str] = mapped_column(TEXT, nullable=False)
     child: Mapped["Season"] = relationship(back_populates="parent")
+    # many-to-many relationship to Child, bypassing the `Association` class
+    children: Mapped[List["Decision"]] = relationship(
+        secondary="locations_decisions", back_populates="parents"
+    )
+
+    # association between Parent -> Association -> Child
+    child_associations: Mapped[List["LocationDecision"]] = relationship(
+        back_populates="parent"
+    )
+
+
+class Decision(Base):
+    __tablename__ = "decisions"
+    id: Mapped[str] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    description: Mapped[str] = mapped_column(TEXT, nullable=False)
+    # many-to-many relationship to Parent, bypassing the `Association` class
+    parents: Mapped[List["Location"]] = relationship(
+        secondary="locations_decisions", back_populates="children"
+    )
+    # association between Child -> Association -> Parent
+    parent_associations: Mapped[List["LocationDecision"]] = relationship(
+        back_populates="child"
+    )
+
+
+# locations_decisions: Table = Table(
+#     "locations_decisions",
+#     Base.metadata,
+#     Column(
+#         "source_location_id",
+#         UUID(as_uuid=True),
+#         ForeignKey("locations.id"),
+#         primary_key=True,
+#     ),
+#     Column(
+#         "destination_location_id",
+#         UUID(as_uuid=True),
+#         ForeignKey("locations.id"),
+#         primary_key=True,
+#     ),
+#     Column(
+#         "decision_id", UUID(as_uuid=True), ForeignKey("decisions.id"), primary_key=True
+#     ),
+# )
+
+
+class LocationDecision(Base):
+    __tablename__ = "locations_decisions"
+    source_location_id: Mapped[str] = mapped_column(
+        ForeignKey(
+            "locations.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    )
+    destination_location_id: Mapped[str] = mapped_column(
+        ForeignKey(
+            "locations.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    )
+    decision_id: Mapped[str] = mapped_column(
+        ForeignKey(
+            "decisions.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    )
+    position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    child: Mapped["Decision"] = relationship(back_populates="parent_associations")
+    __table_args__ = (
+        Index("locations_decisions_position_idx", "source_location_id", "position"),
+        UniqueConstraint(
+            "source_location_id", "position", name="source_position_unique"
+        ),
+    )
