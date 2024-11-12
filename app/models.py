@@ -43,7 +43,7 @@ class Season(Base):
     name: Mapped[str] = mapped_column(VARCHAR(2048), nullable=False)
     genesis_location_id: Mapped[str] = mapped_column(ForeignKey("locations.id"))
     parent: Mapped["Location"] = relationship(
-        back_populates="children", single_parent=True
+        back_populates="child", single_parent=True
     )
 
 
@@ -56,12 +56,14 @@ class Location(Base):
     child: Mapped["Season"] = relationship(back_populates="parent")
     # many-to-many relationship to Child, bypassing the `Association` class
     children: Mapped[List["Decision"]] = relationship(
-        secondary="locations_decisions", back_populates="parents"
+        secondary="locations_decisions",
+        back_populates="parents",
+        foreign_keys="[LocationDecision.destination_location_id, LocationDecision.source_location_id]",
     )
 
     # association between Parent -> Association -> Child
     child_associations: Mapped[List["LocationDecision"]] = relationship(
-        back_populates="parent"
+        back_populates="parent", foreign_keys="[LocationDecision.source_location_id]"
     )
 
 
@@ -77,29 +79,8 @@ class Decision(Base):
     )
     # association between Child -> Association -> Parent
     parent_associations: Mapped[List["LocationDecision"]] = relationship(
-        back_populates="child"
+        back_populates="child", foreign_keys="[LocationDecision.decision_id]"
     )
-
-
-# locations_decisions: Table = Table(
-#     "locations_decisions",
-#     Base.metadata,
-#     Column(
-#         "source_location_id",
-#         UUID(as_uuid=True),
-#         ForeignKey("locations.id"),
-#         primary_key=True,
-#     ),
-#     Column(
-#         "destination_location_id",
-#         UUID(as_uuid=True),
-#         ForeignKey("locations.id"),
-#         primary_key=True,
-#     ),
-#     Column(
-#         "decision_id", UUID(as_uuid=True), ForeignKey("decisions.id"), primary_key=True
-#     ),
-# )
 
 
 class LocationDecision(Base):
@@ -130,7 +111,18 @@ class LocationDecision(Base):
     )
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
-    child: Mapped["Decision"] = relationship(back_populates="parent_associations")
+    # association between Assocation -> Child
+    child: Mapped["Decision"] = relationship(
+        back_populates="parent_associations",
+        foreign_keys="[LocationDecision.decision_id]",
+    )
+
+    # association between Assocation -> Parent
+    parent: Mapped["Location"] = relationship(
+        back_populates="child_associations",
+        foreign_keys="[LocationDecision.source_location_id]",
+    )
+
     __table_args__ = (
         Index("locations_decisions_position_idx", "source_location_id", "position"),
         UniqueConstraint(
