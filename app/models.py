@@ -48,23 +48,6 @@ class Season(Base):
     )
 
 
-# Association table for the many-to-many relationship
-locations_decisions = Table(
-    "locations_decisions",
-    Base.metadata,
-    Column(
-        "location_id", UUID(as_uuid=True), ForeignKey("locations.id"), primary_key=True
-    ),
-    Column(
-        "decision_id", UUID(as_uuid=True), ForeignKey("decisions.id"), primary_key=True
-    ),
-    Column("position", Integer, nullable=False, default=0),
-    # Ensure there is only ever a single position for a location
-    # For example, if a location has two decisions, the positions should be 0 and 1
-    UniqueConstraint("location_id", "position", name="source_position_unique"),
-)
-
-
 class Location(Base):
     __tablename__ = "locations"
     id: Mapped[str] = mapped_column(
@@ -73,16 +56,20 @@ class Location(Base):
     description: Mapped[str] = mapped_column(TEXT, nullable=False)
     season: Mapped["Season"] = relationship(back_populates="location")
 
-    # One-to-many relationship to Decision via source_location_id
-    decisions: Mapped[List["Decision"]] = relationship(
+    # One-to-many relationship: one location can have many source decisions
+    source_decisions: Mapped[List["Decision"]] = relationship(
         "Decision",
         back_populates="source_location",
-        # foreign_keys="[Decision.source_location_id]",
+        foreign_keys="[Decision.source_location_id]",
     )
 
-    # Many-to-many relationship to Decision via destination_location_id
+    # Many-to-many relationship: one location can be the destination for many decisions
     destination_decisions: Mapped[List["Decision"]] = relationship(
-        secondary=locations_decisions, back_populates="destination_locations"
+        "Decision",
+        secondary="decision_destinations",
+        back_populates="destination_locations",
+        primaryjoin="Location.id == DecisionDestination.location_id",
+        secondaryjoin="Decision.id == DecisionDestination.decision_id",
     )
 
     def __repr__(self) -> str:
@@ -98,24 +85,37 @@ class Decision(Base):
     source_location_id: Mapped[str] = mapped_column(
         UUID(as_uuid=True), ForeignKey("locations.id")
     )
-    # destination_location_id: Mapped[str] = mapped_column(
-    #     UUID(as_uuid=True), ForeignKey("locations.id")
-    # )
 
-    # Relationship to the source location
+    # One-to-many relationship: a decision has one source location
     source_location: Mapped["Location"] = relationship(
-        "Location", back_populates="decisions", foreign_keys=[source_location_id]
+        "Location", back_populates="source_decisions", foreign_keys=[source_location_id]
     )
 
     # Many-to-many relationship to Location via destination_location_id
     destination_locations: Mapped[List["Location"]] = relationship(
-        secondary=locations_decisions,
+        "Location",
+        secondary="decision_destinations",
         back_populates="destination_decisions",
-        # foreign_keys=[destination_location_id],
+        primaryjoin="Decision.id == DecisionDestination.decision_id",
+        secondaryjoin="Location.id == DecisionDestination.location_id",
     )
 
     def __repr__(self) -> str:
-        return f"<Decision(id={self.id}, description={self.description}, source_location_id={self.source_location_id}, destination_location_id={self.destination_location_id})>"
+        return f"<Decision(id={self.id}, description={self.description}, source_location_id={self.source_location_id})>"
+
+
+# Association table for the many-to-many relationship
+# locations_decisions = Table(
+class DecisionDestination(Base):
+    __tablename__ = "decision_destinations"
+    decision_id = Column(Integer, ForeignKey("decisions.id"), primary_key=True)
+    location_id = Column(Integer, ForeignKey("locations.id"), primary_key=True)
+    position = Column(Integer, nullable=False, default=0)
+    __table_args__ = (
+        # Ensure there is only ever a single position for a location
+        # For example, if a location has two decisions, the positions should be 0 and 1
+        UniqueConstraint("location_id", "position", name="source_position_unique"),
+    )
 
 
 # class Location(Base):
