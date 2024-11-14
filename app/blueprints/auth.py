@@ -49,7 +49,7 @@ def login_google():
 def callback():
     oauth = current_app.extensions["oauth"]
     token = oauth.google.authorize_access_token()
-    nonce: Optional[str] = session.pop("nonce", None)  # type: ignore
+    nonce: str | None = session.pop("nonce", None)  # type: ignore
     if nonce is not None:
         nonce = str(nonce)  # type: ignore
     user_info = oauth.google.parse_id_token(token, nonce=nonce)
