@@ -18,7 +18,7 @@ class Base(DeclarativeBase):
 
 class User(Base):
     __tablename__ = "users"
-    id: Mapped[str] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     username: Mapped[str] = mapped_column(VARCHAR(255), unique=True, nullable=False)
@@ -33,11 +33,13 @@ class User(Base):
 
 class Season(Base):
     __tablename__ = "seasons"
-    id: Mapped[str] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     name: Mapped[str] = mapped_column(VARCHAR(2048), nullable=False)
-    genesis_location_id: Mapped[str] = mapped_column(ForeignKey("locations.id"))
+    genesis_location_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("locations.id")
+    )
     location: Mapped["Location"] = relationship(
         back_populates="season", single_parent=True
     )
@@ -45,7 +47,7 @@ class Season(Base):
 
 class Location(Base):
     __tablename__ = "locations"
-    id: Mapped[str] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     description: Mapped[str] = mapped_column(TEXT, nullable=False)
@@ -73,10 +75,10 @@ class Location(Base):
 
 class Decision(Base):
     __tablename__ = "decisions"
-    id: Mapped[str] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    source_location_id: Mapped[str] = mapped_column(
+    source_location_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey(
             "locations.id",
@@ -106,7 +108,7 @@ class Decision(Base):
 # Association table for the many-to-many relationship
 class DecisionDestination(Base):
     __tablename__ = "decision_destinations"
-    decision_id: Mapped[str] = mapped_column(
+    decision_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey(
             "decisions.id",
@@ -115,7 +117,7 @@ class DecisionDestination(Base):
         ),
         primary_key=True,
     )
-    destination_location_id: Mapped[str] = mapped_column(
+    destination_location_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey(
             "locations.id",

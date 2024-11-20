@@ -20,7 +20,7 @@ def create_app(config: str) -> Flask:
     db.init_app(app)
     migrate.init_app(app, db)
 
-    engine: Engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+    engine: Engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"])  # type: ignore
     Session = sessionmaker(bind=engine)
     app.extensions["Session"] = Session
     app.extensions["engine"] = engine

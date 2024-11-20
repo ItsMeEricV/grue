@@ -1,9 +1,11 @@
 import uuid
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 
 from ..navigation.nav import Nav
+from ..seasons.seasons import SeasonStore
 from ..users.users import UserStore
+from ..util import uuid_validate
 
 main_bp = Blueprint("main", __name__)
 
@@ -25,12 +27,30 @@ def about():
     return render_template("about.html")
 
 
-@main_bp.route("/play")
-def play():
-    # TODO: remove debug
-    location_id = uuid.UUID("3d6d5051-0f49-47de-a2e2-d87a186c403e")
-    Nav.get_decisions_for_location(location_id)
-    return render_template("game.html")
+@main_bp.route("/play", defaults={"url_season_id": None})
+@main_bp.route("/play/<path:url_season_id>")
+def play(url_season_id: str | None):
+    if url_season_id is not None:
+        id = uuid_validate(url_season_id)
+        if id is None:
+            Season = SeasonStore.get_current_season()
+            season_id = Season.id
+        else:
+            Season = SeasonStore.get_season_by_id(id)
+            season_id = Season.id
+    else:
+        Season = SeasonStore.get_current_season()
+        season_id = Season.id
+
+    decisions = Nav.get_decisions_for_location(Season.genesis_location_id)
+    location_description = decisions[0][1]
+    descisions = [decision[0] for decision in decisions]
+    return render_template(
+        "game.html",
+        location_description=location_description,
+        decisions=descisions,
+        season_id=season_id,
+    )
 
 
 @main_bp.route("/design")

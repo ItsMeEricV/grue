@@ -70,7 +70,7 @@ class Nav:
     @staticmethod
     def get_decisions_for_location(
         location_id: uuid.UUID,
-    ) -> list[DecisionDestination]:
+    ) -> list[tuple[DecisionDestination, str]]:
         """
         Get a location and its decisions
 
@@ -81,10 +81,12 @@ class Nav:
             Location: The location
         """
         stmt = (
-            select(DecisionDestination)
+            select(DecisionDestination, Location.description)
+            .select_from(DecisionDestination)
             .join(Decision)
             .join(Location)
             .where(Decision.source_location_id == location_id)
             .order_by(DecisionDestination.position)
         )
-        return list(get_db_session().scalars(stmt).all())
+        results = list(get_db_session().execute(stmt).all())
+        return [(row.DecisionDestination, row.description) for row in results]
