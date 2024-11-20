@@ -14,9 +14,13 @@
 {{ location_description }}
 
 <ul>
-	{% for decision in decisions %}
-		<li><a href="{{ url_for('main.play', decision_id=decision.destination_location_id) }}">{{ decision.description }}</a></li>
-	{% endfor %}
+	{% if decisions|length > 0 %}
+		{% for decision in decisions %}
+			<li><a href="{{ url_for('main.play') }}/{{ season_id }}/{{ decision.destination_location_id }}">{{ decision.description }}</a></li>
+		{% endfor %}
+	{% else %}
+		<li>Huh, there are no decisions to make. You're stuck here forever :(</li>
+	{% endif %}
 </ul>
 
 <!-- TODO refactor JavaScript to it's own files -->
@@ -28,7 +32,6 @@
 		var seasonId = "{{ season_id }}";
 		// Check if the location UUID is already in the URL
 		if (!currentUrl.includes(seasonId)) {
-			console.log('Appending location ID to URL');
 			// Append the location UUID to the URL
 			var newUrl = currentUrl.endsWith('/') ? currentUrl + seasonId : currentUrl + '/' + seasonId;
 			// Update the browser's URL without reloading the page
