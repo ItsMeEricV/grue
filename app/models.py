@@ -45,7 +45,7 @@ class Season(Base):
     )
     name: Mapped[str] = mapped_column(VARCHAR(2048), nullable=False)
     genesis_location_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("locations.id")
+        UUID(as_uuid=True), ForeignKey("locations.id"), nullable=True
     )
     default: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
