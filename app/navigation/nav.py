@@ -7,7 +7,8 @@ from flask import current_app
 from sqlalchemy import select
 
 from ..db import get_db_session
-from ..models import Decision, DecisionDestination, Location, User
+from ..models import Decision, DecisionDestination, Location, Season, User, UserLocation
+from ..users.user_locations import UserLocationStore
 
 """
 Navigating around in the world
@@ -28,12 +29,8 @@ class Nav:
     __location_id: uuid.UUID
     __user: User
 
-    # TODO: Once we are ready to persist the user's location, we should make a factory method
-    # that takes in a User, fetches its current location, and returns a Nav object. If no
-    # current location is found, we should return a Nav object with the genesis location for the default season
-    # EXAMPLE
     @classmethod
-    def from_user(cls, user: User) -> Nav:
+    def from_user(cls, season: Season, user: User) -> Nav:
         """
         Create a Nav object from a user
 
@@ -43,9 +40,14 @@ class Nav:
         Returns:
             Nav: The Nav object
         """
-        id = uuid.uuid4()
-        id2 = uuid.uuid4()
-        return cls(id, id2, user)
+        user_location = UserLocationStore.fetch(
+            season.id,
+            user.id,
+        )
+        if user_location is None:
+            return cls(season.id, season.genesis_location_id, user)
+
+        return cls(season.id, user_location.location_id, user)
 
     def __init__(
         self, season_id: uuid.UUID, current_location_id: uuid.UUID, user: User
@@ -95,6 +97,19 @@ class Nav:
             description = get_db_session().execute(stmt).scalar_one()
 
         return (description, destinations)
+
+    def set_location(self, location_id: uuid.UUID) -> UserLocation:
+        """
+        Set the current location
+
+        Args:
+            location_id (str): The location id
+        """
+        self.__location_id = location_id
+
+        return UserLocationStore.set(
+            self.__season_id, self.__user.id, self.__location_id
+        )
 
     @staticmethod
     def create_location(description: str) -> uuid.UUID:

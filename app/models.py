@@ -28,6 +28,12 @@ class User(Base):
     email: Mapped[str | None] = mapped_column(VARCHAR(255), unique=True, nullable=True)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # One-to-many relationship: one user can have many user_locations
+    user_locations: Mapped[list["UserLocation"]] = relationship(
+        "UserLocation",
+        back_populates="user",
+    )
+
     def __repr__(self) -> str:
         return f"<User({self.id}, username={self.username}, phone={self.phone}, email={self.email}, is_admin={self.is_admin}>"
 
@@ -51,6 +57,12 @@ class Season(Base):
         back_populates="season", single_parent=True
     )
 
+    # One-to-many relationship: one season can have many user_locations
+    user_seasons: Mapped[list["UserLocation"]] = relationship(
+        "UserLocation",
+        back_populates="season",
+    )
+
     __table_args__ = (
         Index(
             "ix_season_default_unique",
@@ -59,6 +71,34 @@ class Season(Base):
             postgresql_where=(default == True),
         ),
     )
+
+
+class UserLocation(Base):
+    __tablename__ = "user_locations"
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    season_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("seasons.id", onupdate="CASCADE", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    location_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("locations.id", onupdate="CASCADE", ondelete="CASCADE"),
+    )
+
+    # Many-to-one relationship: a user_location has one user
+    user: Mapped["User"] = relationship("User", back_populates="user_locations")
+    location: Mapped["Location"] = relationship(
+        "Location", back_populates="user_locations"
+    )
+    season: Mapped["Season"] = relationship("Season", back_populates="user_seasons")
+
+    # Many-to-one relationship: a user_location has one season
+    # season: Mapped["Season"] = relationship("Season", back_populates="user_seasons")
 
 
 class Location(Base):
@@ -83,6 +123,12 @@ class Location(Base):
         back_populates="destination_locations",
         primaryjoin="Location.id == DecisionDestination.destination_location_id",
         secondaryjoin="Decision.id == DecisionDestination.decision_id",
+    )
+
+    # One-to-many relationship: one location can have many user_locations
+    user_locations: Mapped[list["UserLocation"]] = relationship(
+        "UserLocation",
+        back_populates="location",
     )
 
     def __repr__(self) -> str:

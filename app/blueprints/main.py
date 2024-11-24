@@ -41,7 +41,13 @@ def play(url_season_id: str | None):
         Season = SeasonStore.get_current_season()
     season_id = Season.id
 
-    nav = Nav(season_id, Season.genesis_location_id)
+    user = UserStore.get_current_user()
+    if user is None:
+        return render_template("login.html")
+
+    nav = Nav(season_id, Season.genesis_location_id, user)
+    print(nav)
+    nav.set_location(Season.genesis_location_id)
     return render_decisions(nav)
 
 
@@ -52,7 +58,12 @@ def play_location(url_season_id: str, url_location_id: str):
     if not season_id or not location_id:
         return "Invalid season or location id", 404
 
-    nav = Nav(season_id, location_id)
+    user = UserStore.get_current_user()
+    if user is None:
+        return render_template("login.html")
+
+    nav = Nav(season_id, location_id, user)
+    nav.set_location(location_id)
     return render_decisions(nav)
 
 
