@@ -54,9 +54,9 @@ class UserStore:
             User | None: The current user, or None if there is no user in the session
         """
         db_session = get_db_session()
-        if not session.get("user"):
+        if not session.get("user"):  # type: ignore
             return None
-        email: str = str(session.get("user").get("email"))
+        email: str = str(session.get("user").get("email"))  # type: ignore
         return (
             db_session.execute(select(User).filter(User.email == email))
             .scalars()
