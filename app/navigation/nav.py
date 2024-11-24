@@ -11,6 +11,9 @@ from ..models import Decision, DecisionDestination, Location, User
 
 """
 Navigating around in the world
+
+Instantiate a Nav object given a User object. The Nav object will have a current location
+and a season. The Nav object can fetch decisions for the current location.
 """
 
 
@@ -23,6 +26,7 @@ class Nav:
 
     __season_id: uuid.UUID
     __location_id: uuid.UUID
+    __user: User
 
     # TODO: Once we are ready to persist the user's location, we should make a factory method
     # that takes in a User, fetches its current location, and returns a Nav object. If no
@@ -41,17 +45,23 @@ class Nav:
         """
         id = uuid.uuid4()
         id2 = uuid.uuid4()
-        return cls(id, id2)
+        return cls(id, id2, user)
 
-    def __init__(self, season_id: uuid.UUID, current_location_id: uuid.UUID):
+    def __init__(
+        self, season_id: uuid.UUID, current_location_id: uuid.UUID, user: User
+    ):
         self.__season_id = season_id
         self.__location_id = current_location_id
+        self.__user = user
 
     def get_location_id(self) -> uuid.UUID:
         return self.__location_id
 
     def get_season_id(self) -> uuid.UUID:
         return self.__season_id
+
+    def get_user(self) -> User:
+        return self.__user
 
     def fetch_decisions(self) -> tuple[str, list[DecisionDestination]]:
         """

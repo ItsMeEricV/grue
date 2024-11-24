@@ -5,6 +5,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     ForeignKey,
+    Index,
     Integer,
     UniqueConstraint,
 )
@@ -40,8 +41,23 @@ class Season(Base):
     genesis_location_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("locations.id")
     )
+    default: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
+    version: Mapped[int] = mapped_column(
+        Integer, autoincrement=True, nullable=False, default=1, server_default="1"
+    )
     location: Mapped["Location"] = relationship(
         back_populates="season", single_parent=True
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_season_default_unique",
+            "default",
+            unique=True,
+            postgresql_where=(default == True),
+        ),
     )
 
 
