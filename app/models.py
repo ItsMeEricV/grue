@@ -92,13 +92,12 @@ class UserLocation(Base):
 
     # Many-to-one relationship: a user_location has one user
     user: Mapped["User"] = relationship("User", back_populates="user_locations")
+    # Many-to-one relationship: a user_location has one location
     location: Mapped["Location"] = relationship(
         "Location", back_populates="user_locations"
     )
-    season: Mapped["Season"] = relationship("Season", back_populates="user_seasons")
-
     # Many-to-one relationship: a user_location has one season
-    # season: Mapped["Season"] = relationship("Season", back_populates="user_seasons")
+    season: Mapped["Season"] = relationship("Season", back_populates="user_seasons")
 
 
 class Location(Base):
