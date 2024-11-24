@@ -27,6 +27,14 @@ def about():
     return render_template("about.html")
 
 
+@main_bp.route("/admin")
+def admin():
+    user = UserStore.get_current_user()
+    if user is None or not user.is_admin:
+        return "User must be set and must be an admin", 403
+    return render_template("admin.html")
+
+
 @main_bp.route("/play", defaults={"url_season_id": None})
 @main_bp.route("/play/<path:url_season_id>")
 def play(url_season_id: str | None):
@@ -34,20 +42,25 @@ def play(url_season_id: str | None):
     # TODO: We should make a season dropdown select for admins so we can choose the season
     if url_season_id:
         id = uuid_validate(url_season_id)
-        Season = (
+        season = (
             SeasonStore.get_season_by_id(id) if id else SeasonStore.get_current_season()
         )
     else:
-        Season = SeasonStore.get_current_season()
-    season_id = Season.id
+        season = SeasonStore.get_current_season()
+    season_id = season.id
 
     user = UserStore.get_current_user()
     if user is None:
         return render_template("login.html")
 
-    nav = Nav(season_id, Season.genesis_location_id, user)
-    print(nav)
-    nav.set_location(Season.genesis_location_id)
+    if season.genesis_location_id is None:
+        return (
+            f"Eeek. No genesis location set for season {season.id} / {season.name}",
+            404,
+        )
+
+    nav = Nav(season_id, season.genesis_location_id, user)
+    nav.set_location(season.genesis_location_id)
     return render_decisions(nav)
 
 

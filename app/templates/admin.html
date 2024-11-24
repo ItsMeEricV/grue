@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Admin{% endblock %}
+
+{% block content %}
+<h1>Admin page</h1>
+
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+	<div class="collapse navbar-collapse" id="adminNavbar">
+		<ul class="navbar-nav mr-auto">
+			<li class="nav-item {% if request.endpoint == 'admin.users' %}active{% endif %}">
+				<a class="nav-link" href="{{ url_for('admin.users') }}">Users</a>
+			</li>
+			<li class="nav-item {% if request.endpoint == 'admin.seasons' %}active{% endif %}">
+				<a class="nav-link" href="{{ url_for('admin.seasons') }}">Seasons</a>
+			</li>
+		</ul>
+	</div>
+</nav>
+
+{% block admin_content %}{% endblock %}
+
+{% endblock %}

@@ -8,6 +8,7 @@ from sqlalchemy import (
     Index,
     Integer,
     UniqueConstraint,
+    and_,
 )
 from sqlalchemy.dialects.postgresql import TEXT, UUID, VARCHAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -44,7 +45,7 @@ class Season(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     name: Mapped[str] = mapped_column(VARCHAR(2048), nullable=False)
-    genesis_location_id: Mapped[uuid.UUID] = mapped_column(
+    genesis_location_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey(
             "locations.id", use_alter=True, name="fk_seasons_genesis_location_id"
@@ -57,6 +58,8 @@ class Season(Base):
     version: Mapped[int] = mapped_column(
         Integer, autoincrement=True, nullable=False, default=1, server_default="1"
     )
+
+    # relationships
     genesis_location: Mapped["Location"] = relationship(
         back_populates="season",
         single_parent=True,
@@ -81,7 +84,7 @@ class Season(Base):
             "ix_season_default_unique",
             "default",
             unique=True,
-            postgresql_where=(default == True),
+            postgresql_where=and_(default == True, genesis_location_id != None),
         ),
     )
 
@@ -155,6 +158,8 @@ class Location(Base):
         "UserLocation",
         back_populates="location",
     )
+
+    __table_args__ = (Index("ix_locations_season_id", "season_id"),)
 
     def __repr__(self) -> str:
         return f"<Location(id={self.id}, description={self.description})>"

@@ -6,6 +6,7 @@ from sqlalchemy.engine.base import Engine
 from sqlalchemy.orm import sessionmaker
 
 from .auth.oauth import register_oauth
+from .blueprints.admin import admin_bp
 from .blueprints.auth import auth_bp
 from .blueprints.main import main_bp
 from .models import Base
@@ -32,6 +33,7 @@ def create_app(config: str) -> Flask:
     # Import and register blueprints
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(admin_bp)
 
     return app
 
