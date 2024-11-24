@@ -32,7 +32,7 @@ def login():
             return redirect(url_for("main.index"))
         else:
             return "Invalid credentials", 401
-    google_client_id = current_app.config["GOOGLE_CLIENT_ID"]
+    google_client_id = current_app.config["GOOGLE_CLIENT_ID"]  # type: ignore
     return render_template("login.html", google_client_id=google_client_id)
 
 

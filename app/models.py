@@ -5,6 +5,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     ForeignKey,
+    Index,
     Integer,
     UniqueConstraint,
 )
@@ -18,7 +19,7 @@ class Base(DeclarativeBase):
 
 class User(Base):
     __tablename__ = "users"
-    id: Mapped[str] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     username: Mapped[str] = mapped_column(VARCHAR(255), unique=True, nullable=False)
@@ -27,25 +28,81 @@ class User(Base):
     email: Mapped[str | None] = mapped_column(VARCHAR(255), unique=True, nullable=True)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # One-to-many relationship: one user can have many user_locations
+    user_locations: Mapped[list["UserLocation"]] = relationship(
+        "UserLocation",
+        back_populates="user",
+    )
+
     def __repr__(self) -> str:
         return f"<User({self.id}, username={self.username}, phone={self.phone}, email={self.email}, is_admin={self.is_admin}>"
 
 
 class Season(Base):
     __tablename__ = "seasons"
-    id: Mapped[str] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     name: Mapped[str] = mapped_column(VARCHAR(2048), nullable=False)
-    genesis_location_id: Mapped[str] = mapped_column(ForeignKey("locations.id"))
+    genesis_location_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("locations.id")
+    )
+    default: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false"
+    )
+    version: Mapped[int] = mapped_column(
+        Integer, autoincrement=True, nullable=False, default=1, server_default="1"
+    )
     location: Mapped["Location"] = relationship(
         back_populates="season", single_parent=True
     )
 
+    # One-to-many relationship: one season can have many user_locations
+    user_seasons: Mapped[list["UserLocation"]] = relationship(
+        "UserLocation",
+        back_populates="season",
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_season_default_unique",
+            "default",
+            unique=True,
+            postgresql_where=(default == True),
+        ),
+    )
+
+
+class UserLocation(Base):
+    __tablename__ = "user_locations"
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", onupdate="CASCADE", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    season_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("seasons.id", onupdate="CASCADE", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    location_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("locations.id", onupdate="CASCADE", ondelete="CASCADE"),
+    )
+
+    # Many-to-one relationship: a user_location has one user
+    user: Mapped["User"] = relationship("User", back_populates="user_locations")
+    # Many-to-one relationship: a user_location has one location
+    location: Mapped["Location"] = relationship(
+        "Location", back_populates="user_locations"
+    )
+    # Many-to-one relationship: a user_location has one season
+    season: Mapped["Season"] = relationship("Season", back_populates="user_seasons")
+
 
 class Location(Base):
     __tablename__ = "locations"
-    id: Mapped[str] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     description: Mapped[str] = mapped_column(TEXT, nullable=False)
@@ -67,16 +124,22 @@ class Location(Base):
         secondaryjoin="Decision.id == DecisionDestination.decision_id",
     )
 
+    # One-to-many relationship: one location can have many user_locations
+    user_locations: Mapped[list["UserLocation"]] = relationship(
+        "UserLocation",
+        back_populates="location",
+    )
+
     def __repr__(self) -> str:
         return f"<Location(id={self.id}, description={self.description})>"
 
 
 class Decision(Base):
     __tablename__ = "decisions"
-    id: Mapped[str] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    source_location_id: Mapped[str] = mapped_column(
+    source_location_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey(
             "locations.id",
@@ -106,7 +169,7 @@ class Decision(Base):
 # Association table for the many-to-many relationship
 class DecisionDestination(Base):
     __tablename__ = "decision_destinations"
-    decision_id: Mapped[str] = mapped_column(
+    decision_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey(
             "decisions.id",
@@ -115,7 +178,7 @@ class DecisionDestination(Base):
         ),
         primary_key=True,
     )
-    destination_location_id: Mapped[str] = mapped_column(
+    destination_location_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey(
             "locations.id",

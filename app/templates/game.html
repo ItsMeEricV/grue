@@ -3,10 +3,41 @@
 {% block title %}Game time{% endblock %}
 
 {% block content %}
-<h1>You are about to be eaten by a grue</h1>
+<h1>Adventure Time™</h1>
 
 {% if current_user_is_admin() %}
 <p>Welcome, {{ user.username }}!</p>
 {% endif %}
+
+<hr>
+
+{{ location_description }}
+
+<ul>
+	{% if decisions|length > 0 %}
+		{% for decision in decisions %}
+			<li><a href="{{ url_for('main.play') }}/{{ season_id }}/{{ decision.destination_location_id }}">{{ decision.description }}</a></li>
+		{% endfor %}
+	{% else %}
+		<li>Huh, there are no decisions to make. You're stuck here forever :(</li>
+	{% endif %}
+</ul>
+
+<!-- TODO refactor JavaScript to it's own files -->
+<script>
+	document.addEventListener("DOMContentLoaded", function () {
+		// Get the current URL
+		var currentUrl = window.location.href;
+		// Get the location UUID passed from the server
+		var seasonId = "{{ season_id }}";
+		// Check if the location UUID is already in the URL
+		if (!currentUrl.includes(seasonId)) {
+			// Append the location UUID to the URL
+			var newUrl = currentUrl.endsWith('/') ? currentUrl + seasonId : currentUrl + '/' + seasonId;
+			// Update the browser's URL without reloading the page
+			window.history.replaceState({}, '', newUrl);
+		}
+	});
+</script>
 
 {% endblock %}

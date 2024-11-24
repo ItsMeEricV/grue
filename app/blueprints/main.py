@@ -3,7 +3,9 @@ import uuid
 from flask import Blueprint, render_template
 
 from ..navigation.nav import Nav
+from ..seasons.seasons import SeasonStore
 from ..users.users import UserStore
+from ..util import uuid_validate
 
 main_bp = Blueprint("main", __name__)
 
@@ -25,12 +27,57 @@ def about():
     return render_template("about.html")
 
 
-@main_bp.route("/play")
-def play():
-    # TODO: remove debug
-    location_id = uuid.UUID("3d6d5051-0f49-47de-a2e2-d87a186c403e")
-    Nav.get_decisions_for_location(location_id)
-    return render_template("game.html")
+@main_bp.route("/play", defaults={"url_season_id": None})
+@main_bp.route("/play/<path:url_season_id>")
+def play(url_season_id: str | None):
+    season_id = None
+    # TODO: We should make a season dropdown select for admins so we can choose the season
+    if url_season_id:
+        id = uuid_validate(url_season_id)
+        Season = (
+            SeasonStore.get_season_by_id(id) if id else SeasonStore.get_current_season()
+        )
+    else:
+        Season = SeasonStore.get_current_season()
+    season_id = Season.id
+
+    user = UserStore.get_current_user()
+    if user is None:
+        return render_template("login.html")
+
+    nav = Nav(season_id, Season.genesis_location_id, user)
+    print(nav)
+    nav.set_location(Season.genesis_location_id)
+    return render_decisions(nav)
+
+
+@main_bp.route("/play/<url_season_id>/<url_location_id>")
+def play_location(url_season_id: str, url_location_id: str):
+    season_id = uuid_validate(url_season_id)
+    location_id = uuid_validate(url_location_id)
+    if not season_id or not location_id:
+        return "Invalid season or location id", 404
+
+    user = UserStore.get_current_user()
+    if user is None:
+        return render_template("login.html")
+
+    nav = Nav(season_id, location_id, user)
+    nav.set_location(location_id)
+    return render_decisions(nav)
+
+
+# Helper function to render all the decisions for a location
+# def render_decisions(season_id: uuid.UUID, location_id: uuid.UUID):
+def render_decisions(nav: Nav):
+    # location_description, decisions = Nav.get_decisions_for_location(location_id)
+    location_description, decisions = nav.fetch_decisions()
+    return render_template(
+        "game.html",
+        location_description=location_description,
+        decisions=decisions,
+        season_id=nav.get_season_id(),
+    )
 
 
 @main_bp.route("/design")

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import uuid
 from typing import TypedDict
 
@@ -5,10 +7,14 @@ from flask import current_app
 from sqlalchemy import select
 
 from ..db import get_db_session
-from ..models import Decision, DecisionDestination, Location
+from ..models import Decision, DecisionDestination, Location, Season, User, UserLocation
+from ..users.user_locations import UserLocationStore
 
 """
 Navigating around in the world
+
+Instantiate a Nav object given a User object. The Nav object will have a current location
+and a season. The Nav object can fetch decisions for the current location.
 """
 
 
@@ -18,6 +24,92 @@ class Nav:
         "Destination",
         {"destination_location_id": uuid.UUID, "description": str, "position": int},
     )
+
+    __season_id: uuid.UUID
+    __location_id: uuid.UUID
+    __user: User
+
+    @classmethod
+    def from_user(cls, season: Season, user: User) -> Nav:
+        """
+        Create a Nav object from a user
+
+        Args:
+            user (User): The user
+
+        Returns:
+            Nav: The Nav object
+        """
+        user_location = UserLocationStore.fetch(
+            season.id,
+            user.id,
+        )
+        if user_location is None:
+            return cls(season.id, season.genesis_location_id, user)
+
+        return cls(season.id, user_location.location_id, user)
+
+    def __init__(
+        self, season_id: uuid.UUID, current_location_id: uuid.UUID, user: User
+    ):
+        self.__season_id = season_id
+        self.__location_id = current_location_id
+        self.__user = user
+
+    def get_location_id(self) -> uuid.UUID:
+        return self.__location_id
+
+    def get_season_id(self) -> uuid.UUID:
+        return self.__season_id
+
+    def get_user(self) -> User:
+        return self.__user
+
+    def fetch_decisions(self) -> tuple[str, list[DecisionDestination]]:
+        """
+        Get a location and its decisions
+
+        Args:
+            location_id (str): The location id
+
+        Returns:
+            tuple[str, list[DecisionDestination]]: The location description and a list of decisions
+        """
+        stmt = (
+            select(DecisionDestination, Location.description)
+            .select_from(DecisionDestination)
+            .join(Decision)
+            .join(Location)
+            .where(Decision.source_location_id == self.__location_id)
+            .order_by(DecisionDestination.position)
+        )
+        results = list(get_db_session().execute(stmt).all())
+        description = None
+        destinations: list[DecisionDestination] = []
+        for row in results:
+            description = row.description
+            destinations.append(row.DecisionDestination)
+
+        # We should always have one or more decisions for a location, but if have no
+        # decisions, we should still return the location description
+        if description is None:
+            stmt = select(Location.description).where(Location.id == self.__location_id)
+            description = get_db_session().execute(stmt).scalar_one()
+
+        return (description, destinations)
+
+    def set_location(self, location_id: uuid.UUID) -> UserLocation:
+        """
+        Set the current location
+
+        Args:
+            location_id (str): The location id
+        """
+        self.__location_id = location_id
+
+        return UserLocationStore.set(
+            self.__season_id, self.__user.id, self.__location_id
+        )
 
     @staticmethod
     def create_location(description: str) -> uuid.UUID:
@@ -66,25 +158,3 @@ class Nav:
                 )
                 db_session.add(decision_destination)
         return decision
-
-    @staticmethod
-    def get_decisions_for_location(
-        location_id: uuid.UUID,
-    ) -> list[DecisionDestination]:
-        """
-        Get a location and its decisions
-
-        Args:
-            location_id (str): The location id
-
-        Returns:
-            Location: The location
-        """
-        stmt = (
-            select(DecisionDestination)
-            .join(Decision)
-            .join(Location)
-            .where(Decision.source_location_id == location_id)
-            .order_by(DecisionDestination.position)
-        )
-        return list(get_db_session().scalars(stmt).all())
