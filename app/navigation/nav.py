@@ -160,7 +160,6 @@ class Nav:
 
         Session = current_app.extensions["Session"]
         with Session.begin() as db_session:
-
             db_session.add(decision)
             for destination in destinations:
                 decision_destination = DecisionDestination(
