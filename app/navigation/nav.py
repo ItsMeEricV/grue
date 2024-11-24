@@ -8,6 +8,7 @@ from sqlalchemy import select
 
 from ..db import get_db_session
 from ..models import Decision, DecisionDestination, Location, Season, User, UserLocation
+from ..seasons.seasons import SeasonStore
 from ..users.user_locations import UserLocationStore
 
 """
@@ -30,7 +31,7 @@ class Nav:
     __user: User
 
     @classmethod
-    def from_user(cls, season: Season, user: User) -> Nav:
+    def from_user(cls, user: User) -> Nav:
         """
         Create a Nav object from a user
 
@@ -40,6 +41,10 @@ class Nav:
         Returns:
             Nav: The Nav object
         """
+        season = SeasonStore.get_current_season()
+        if season.genesis_location_id is None:
+            raise ValueError("No genesis location set for season")
+
         user_location = UserLocationStore.fetch(
             season.id,
             user.id,
@@ -56,6 +61,10 @@ class Nav:
         self.__location_id = current_location_id
         self.__user = user
 
+    """
+    Getters
+    """
+
     def get_location_id(self) -> uuid.UUID:
         return self.__location_id
 
@@ -64,6 +73,10 @@ class Nav:
 
     def get_user(self) -> User:
         return self.__user
+
+    """
+    Navigation core methods
+    """
 
     def fetch_decisions(self) -> tuple[str, list[DecisionDestination]]:
         """
@@ -112,7 +125,7 @@ class Nav:
         )
 
     @staticmethod
-    def create_location(description: str) -> uuid.UUID:
+    def create_location(season: Season, description: str) -> uuid.UUID:
         """
                 Create a new location
 
@@ -124,7 +137,7 @@ class Nav:
         """
         db_session = get_db_session()
         id: uuid.UUID = uuid.uuid4()
-        location = Location(id=id, description=description)
+        location = Location(id=id, description=description, season_id=season.id)
         db_session.add(location)
         db_session.commit()
         return id
@@ -147,7 +160,6 @@ class Nav:
 
         Session = current_app.extensions["Session"]
         with Session.begin() as db_session:
-
             db_session.add(decision)
             for destination in destinations:
                 decision_destination = DecisionDestination(

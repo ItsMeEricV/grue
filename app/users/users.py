@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from flask import session
+from flask import current_app, session
 from sqlalchemy import or_, select
 
 from ..db import get_db_session
@@ -43,6 +43,7 @@ class UserStore:
         users: Sequence[User] = (
             db_session.execute(select(User).order_by(User.username)).scalars().all()
         )
+        db_session.close()
         return list(users)
 
     @staticmethod
@@ -53,15 +54,15 @@ class UserStore:
         Returns:
             User | None: The current user, or None if there is no user in the session
         """
-        db_session = get_db_session()
-        if not session.get("user"):
+        if not session.get("user"):  # type: ignore
             return None
-        email: str = str(session.get("user").get("email"))
-        return (
-            db_session.execute(select(User).filter(User.email == email))
-            .scalars()
-            .one_or_none()
-        )
+        email: str = str(session.get("user").get("email"))  # type: ignore
+
+        Session = current_app.extensions["Session"]
+        with Session() as db_session:
+            user = db_session.query(User).filter(User.email == email).one_or_none()
+
+        return user
 
     @staticmethod
     def current_user_is_admin() -> bool:

@@ -8,6 +8,7 @@ from sqlalchemy import (
     Index,
     Integer,
     UniqueConstraint,
+    and_,
 )
 from sqlalchemy.dialects.postgresql import TEXT, UUID, VARCHAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -44,8 +45,12 @@ class Season(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     name: Mapped[str] = mapped_column(VARCHAR(2048), nullable=False)
-    genesis_location_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("locations.id")
+    genesis_location_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "locations.id", use_alter=True, name="fk_seasons_genesis_location_id"
+        ),
+        nullable=True,
     )
     default: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
@@ -53,8 +58,19 @@ class Season(Base):
     version: Mapped[int] = mapped_column(
         Integer, autoincrement=True, nullable=False, default=1, server_default="1"
     )
-    location: Mapped["Location"] = relationship(
-        back_populates="season", single_parent=True
+
+    # relationships
+    genesis_location: Mapped["Location"] = relationship(
+        back_populates="season",
+        single_parent=True,
+        foreign_keys="[Location.id]",
+        primaryjoin="Location.id == Season.genesis_location_id",
+    )
+    locations: Mapped[list["Location"]] = relationship(
+        "Location",
+        back_populates="season",
+        foreign_keys="[Location.season_id]",
+        primaryjoin="Location.season_id == Season.id",
     )
 
     # One-to-many relationship: one season can have many user_locations
@@ -68,7 +84,7 @@ class Season(Base):
             "ix_season_default_unique",
             "default",
             unique=True,
-            postgresql_where=(default == True),
+            postgresql_where=and_(default == True, genesis_location_id != None),
         ),
     )
 
@@ -106,7 +122,20 @@ class Location(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     description: Mapped[str] = mapped_column(TEXT, nullable=False)
-    season: Mapped["Season"] = relationship(back_populates="location")
+    season_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "seasons.id",
+            onupdate="CASCADE",
+            ondelete="CASCADE",
+            name="fk_locations_season_id",
+        ),
+        nullable=False,
+    )
+
+    season: Mapped["Season"] = relationship(
+        back_populates="locations", foreign_keys=[season_id]
+    )
 
     # One-to-many relationship: one location can have many source decisions
     source_decisions: Mapped[list["Decision"]] = relationship(
@@ -129,6 +158,8 @@ class Location(Base):
         "UserLocation",
         back_populates="location",
     )
+
+    __table_args__ = (Index("ix_locations_season_id", "season_id"),)
 
     def __repr__(self) -> str:
         return f"<Location(id={self.id}, description={self.description})>"

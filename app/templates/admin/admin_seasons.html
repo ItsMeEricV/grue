@@ -1,0 +1,45 @@
+{% extends "admin.html" %}
+
+{% block admin_content %}
+<h2>Season management</h2>
+
+<form action="{{ url_for('admin.upload_file') }}" method="post" enctype="multipart/form-data">
+	<div class="form-group">
+		<label for="file">Upload a new season</label>
+		<input type="file" class="form-control-file" id="file" name="file">
+	</div>
+	<button type="submit" class="btn btn-primary">Go!</button>
+</form>
+<br />
+<br />
+
+<table class="table table-striped">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Genesis Location</th>
+			<th>Default season?</th>
+			<th>Version</th>
+			<th>Location Count</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for season, location_count in seasons %}
+		<tr>
+			<td>{{ season.name }} <a href="{{ url_for('main.play', url_season_id=season.id) }}">[PLAY]</a></td>
+			<td>{{ season.genesis_location_id }}</td>
+			<td>
+				{% if season.default %}
+				<span class="text-danger font-weight-bold">{{ season.default }}</span>
+				{% else %}
+				{{ season.default }}
+				{% endif %}
+			</td>
+			<td>{{ season.version }}</td>
+			<td>{{ location_count }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+{% endblock %}
