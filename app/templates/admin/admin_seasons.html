@@ -6,9 +6,13 @@
 <form action="{{ url_for('admin.upload_file') }}" method="post" enctype="multipart/form-data">
 	<div class="form-group">
 		<label for="file">Upload a new season</label>
-		<input type="file" class="form-control-file" id="file" name="file">
+		<input type="file" class="form-control-file" id="file" name="file" oninput="validateForm()">
 	</div>
-	<button type="submit" class="btn btn-primary">Go!</button>
+	<div class="form-group">
+		<label for="season_name">Season Name</label>
+		<input type="text" class="form-control" id="season_name" name="season_name" placeholder="Enter season name (at least 3 characters)" oninput="validateForm()">
+	</div>
+	<button type="submit" class="btn btn-primary" id="submit_button" disabled>Go!</button>
 </form>
 <br />
 <br />
@@ -19,8 +23,9 @@
 			<th>Name</th>
 			<th>Genesis Location</th>
 			<th>Default season?</th>
-			<th>Version</th>
+			<th>Date created</th>
 			<th>Location Count</th>
+			<th>Origin File</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -35,11 +40,33 @@
 				{{ season.default }}
 				{% endif %}
 			</td>
-			<td>{{ season.version }}</td>
+			<td><span class="datetime" data-datetime="{{ season.date_created.isoformat() }}"></span></td>
 			<td>{{ location_count }}</td>
+			<td>{{ season.origin_file }}</td>
 		</tr>
 		{% endfor %}
 	</tbody>
 </table>
+
+<script>
+	function validateForm() {
+		const seasonNameInput = document.getElementById('season_name');
+		const fileInput = document.getElementById('file');
+		const submitButton = document.getElementById('submit_button');
+		if (seasonNameInput.value.length >= 3 && fileInput.files.length > 0) {
+			submitButton.disabled = false;
+		} else {
+			submitButton.disabled = true;
+		}
+	}
+
+	document.addEventListener('DOMContentLoaded', function () {
+		const datetimeElements = document.querySelectorAll('.datetime');
+		datetimeElements.forEach(function (element) {
+			const datetime = new Date(element.getAttribute('data-datetime'));
+			element.textContent = datetime.toLocaleString();
+		});
+	});
+</script>
 
 {% endblock %}
