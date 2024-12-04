@@ -1,6 +1,32 @@
 import json
 import re
-from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Dict, List, Tuple, TypedDict
+
+
+# Metadata structure for Harlowe format
+class HarloweMetadata(TypedDict):
+    ifid: str
+    format: str
+    format_version: str
+    start: str
+    zoom: int
+
+
+# The link from one passage to another
+# Label is the text displayed to the user. It can be the same as the target passage name.
+@dataclass
+class TwineLink:
+    label: str
+    target: str
+
+
+# A passage in the Twine story, containing one or more links to other passages
+@dataclass
+class TwinePassage:
+    name: str
+    content: str
+    links: List[TwineLink]
 
 
 class Import:
@@ -11,8 +37,13 @@ class Import:
 
 
 class ImportTwine(Import):
+    story_title: str
+    metadata: HarloweMetadata
+    # passages: Dict[str, Tuple[str, List[str]]] = {}
+    passages: list[TwinePassage] = []
 
-    def parse_twee_filev1(self) -> Dict[str, Tuple[str, List[str]]]:
+    # def parse_twee_file(self) -> Dict[str, Tuple[str, List[str]]]:
+    def parse_twee_file(self) -> list[TwinePassage]:
         """
         Parses a Twee file and extracts passage content and connections.
 
@@ -24,80 +55,59 @@ class ImportTwine(Import):
             the passage content and a list of links to other passages.
         """
 
-        passages: Dict[str, Tuple[str, List[str]]] = {}
         with open(self.filename, "r", encoding="utf-8") as file:
             twee_content = file.read()
 
         # Regular expression to match a passage
-        passage_pattern = r"::\s*(.+?)\s*(?:\{\s*.*?\s*\})?\n(.*?)(?=\n::|$)"
-        matches = re.findall(passage_pattern, twee_content, re.DOTALL)
+        passage_pattern = r"\s*(.+?)\s*(?:\{\s*.*?\s*\})?\n(.*?)(?=\n::|$)"
+        matches = twee_content.split("\n::")
 
         for match in matches:
-            passage_name = match[0]
-            passage_content = match[1].strip()
+            match = match.strip()
+            lines = match.split("\n")
+            first = lines[0]
 
-            # Regular expression to match links within a passage
-            link_pattern = r"\[\[(.*?)(?:->(.*?))?\]\]"
-            links = re.findall(link_pattern, passage_content)
+            # first line might be empty
+            if len(first) == 0:
+                continue
+            # store the story title
+            elif first == "StoryTitle":
+                self.story_title = lines[1]
+                continue
+            # store the story metadata
+            elif first == "StoryData":
+                m = "".join(lines[1:])
+                try:
+                    self.metadata: HarloweMetadata = json.loads(
+                        m, object_hook=lambda d: HarloweMetadata(**d)
+                    )
+                except json.JSONDecodeError as e:
+                    print(f"Error decoding JSON for StoryData: {e}")
 
-            # Extract only the destination passage names from the links
-            passage_links = [link[1] if link[1] else link[0] for link in links]
+                if self.metadata["format"] != "Harlowe":
+                    raise ValueError("Only Harlowe format is supported")
 
-            passages[passage_name] = (passage_content, passage_links)
-
-        return passages
-
-    def parse_twee_file(self) -> List[Tuple[str, str, List[str]]]:
-        """
-        Parses a Twee file, extracts passage content and connections, and orders them.
-
-        Args:
-            file_path: Path to the Twee file.
-
-        Returns:
-            A list of tuples, where each tuple contains the passage name,
-            the first line of the passage content, and a list of links
-            to other passages. The list is ordered according to the story flow.
-        """
-
-        with open(self.filename, "r", encoding="utf-8") as file:
-            twee_content = file.read()
-
-        # Extract StoryData JSON
-        story_data_match = re.search(
-            r"::\s*StoryData\n(.*?)(?=\n::|$)", twee_content, re.DOTALL
-        )
-        if not story_data_match:
-            raise ValueError("StoryData not found in the Twee file.")
-        story_data = json.loads(story_data_match.group(1).strip())
-        start_passage = story_data.get("start")
-        if not start_passage:
-            raise ValueError("Start passage not found in StoryData.")
-        # Extract passages
-        passage_pattern = r"::\s*(.+?)\s*(?:\{\s*.*?\s*\})?\n(.*?)(?=\n::|$)"
-        matches = re.findall(passage_pattern, twee_content, re.DOTALL)
-        passages: Dict[str, Tuple[str, List[str]]] = {}
-        for match in matches:
-            passage_name = match[0]
-            passage_lines = match[1].strip().splitlines()
-            passage_content = passage_lines[0] if passage_lines else ""
-
-            # Extract links
-            link_pattern = r"\[\[(.*?)(?:->(.*?))?\]\]"
-            links = re.findall(link_pattern, match[1])
-            passage_links = [link[1] if link[1] else link[0] for link in links]
-
-            passages[passage_name] = (passage_content, passage_links)
-
-        # Order passages based on story flow
-        ordered_passages = []
-        current_passage = start_passage
-        while current_passage:
-            content, links = passages.get(current_passage, ("", []))
-            ordered_passages.append((current_passage, content, links))
-            if links:
-                current_passage = links[0]  # Follow the first link
+                continue
             else:
-                current_passage = None
+                # now let's parse the passages
+                inner_matches = re.findall(passage_pattern, match, re.DOTALL)
 
-        return ordered_passages
+                for match in inner_matches:
+                    passage_name = match[0].strip()
+                    passage_content = match[1].split("\n")[0].strip()
+                    passage = TwinePassage(
+                        name=passage_name, content=passage_content, links=[]
+                    )
+
+                    # Regular expression to match links within a passage
+                    link_pattern = r"\[\[(.*?)(?:->(.*?))?\]\]"
+                    links = re.findall(link_pattern, match[1].strip())
+
+                    for link in links:
+                        label = link[0]
+                        destination = link[1] if link[1] else link[0]
+                        passage.links.append(TwineLink(label, destination))
+
+                    self.passages.append(passage)
+
+        return self.passages
