@@ -1,7 +1,7 @@
 from unittest.mock import mock_open, patch
 
 import pytest
-from flask import Flask, session
+from flask import Flask
 
 from app.navigation.import_twine import ImportTwine
 

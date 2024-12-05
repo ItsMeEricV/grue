@@ -1,7 +1,7 @@
 import json
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, TypedDict
+from typing import List, TypedDict
 
 
 # Metadata structure for Harlowe format
@@ -39,10 +39,8 @@ class Import:
 class ImportTwine(Import):
     story_title: str
     metadata: HarloweMetadata
-    # passages: Dict[str, Tuple[str, List[str]]] = {}
     passages: list[TwinePassage] = []
 
-    # def parse_twee_file(self) -> Dict[str, Tuple[str, List[str]]]:
     def parse_twee_file(self) -> list[TwinePassage]:
         """
         Parses a Twee file and extracts passage content and connections.
