@@ -48,16 +48,15 @@ def upload_file():
         return redirect(request.url)
 
     file = request.files["file"]
-    season_name: str = request.form["season_name"]
     if file.filename == "":
         print("No selected file")
         return redirect(request.url)
     if file and file.filename and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        filename = f"{int(time.time())}_{filename}"
-        filename = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(filename)
-        twine = ImportTwine(filename)
+        filename_with_ts = f"{int(time.time())}_{filename}"
+        filepath = os.path.join(UPLOAD_FOLDER, filename_with_ts)
+        file.save(filepath)
+        twine = ImportTwine(filepath, file.filename)
         twine.parse_twee_file()
         twine.insert_story()
 

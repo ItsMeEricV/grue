@@ -19,7 +19,7 @@
 			<li><a href="{{ url_for('main.play') }}/{{ season_id }}/{{ decision.destination_location_id }}">{{ decision.description }}</a></li>
 		{% endfor %}
 	{% else %}
-		<li>Huh, there are no decisions to make. You're stuck here forever :(</li>
+		<li>No more decisions left! END OF GAME</li>
 	{% endif %}
 </ul>
 

@@ -163,6 +163,7 @@ class Nav:
             db_session.add(decision)
             for destination in destinations:
                 decision_destination = DecisionDestination(
+                    id=uuid.uuid4(),
                     decision_id=decision_id,
                     destination_location_id=destination["destination_location_id"],
                     description=destination["description"],

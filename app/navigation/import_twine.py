@@ -6,7 +6,7 @@ from typing import List, TypedDict
 from uuid import UUID, uuid4
 
 from flask import current_app
-from sqlalchemy import insert
+from sqlalchemy import insert, update
 
 from ..models import Decision, DecisionDestination, Location, Season
 
@@ -37,17 +37,26 @@ class TwinePassage:
 
 
 class Import:
+    filepath: str
     filename: str
 
-    def __init__(self, filename: str):
+    def __init__(self, filepath: str, filename: str):
+        self.filepath = filepath
         self.filename = filename
 
 
 class ImportTwine(Import):
     story_title: str
-    metadata: HarloweMetadata
+    metadata: HarloweMetadata | None
     passages: list[TwinePassage] = []
     season_id: UUID
+
+    def __init__(self, filepath: str, filename: str):
+        super().__init__(filepath, filename)
+        self.story_title: str = ""
+        self.metadata = None
+        self.passages: List[TwinePassage] = []
+        self.season_id: UUID = uuid4()
 
     def parse_twee_file(self) -> list[TwinePassage]:
         """
@@ -61,34 +70,41 @@ class ImportTwine(Import):
             the passage content and a list of links to other passages.
         """
 
-        with open(self.filename, "r", encoding="utf-8") as file:
+        with open(self.filepath, "r", encoding="utf-8") as file:
             twee_content = file.read()
 
         # Regular expression to match a passage
         passage_pattern = r"\s*(.+?)\s*(?:\{\s*.*?\s*\})?\n(.*?)(?=\n::|$)"
-        matches = twee_content.split("\n::")
+        matches = twee_content.split("::")
 
         for match in matches:
             match = match.strip()
             lines = match.split("\n")
             first = lines[0]
+            print(lines)
 
             # first line might be empty
             if len(first) == 0:
                 continue
             # store the story title
             elif first == "StoryTitle":
+                print("in story title!!!")
+                print(lines)
                 self.story_title = lines[1]
                 continue
             # store the story metadata
             elif first == "StoryData":
                 m = "".join(lines[1:])
                 try:
-                    self.metadata: HarloweMetadata = json.loads(
+                    self.metadata = json.loads(
                         m, object_hook=lambda d: HarloweMetadata(**d)
                     )
                 except json.JSONDecodeError as e:
                     print(f"Error decoding JSON for StoryData: {e}")
+                    raise json.JSONDecodeError(
+                        "Error decoding JSON for StoryData", e.doc, e.pos
+                    )
+                assert self.metadata is not None
 
                 if self.metadata["format"] != "Harlowe":
                     raise ValueError("Only Harlowe format is supported")
@@ -123,6 +139,8 @@ class ImportTwine(Import):
         Inserts the story into the database.
         Creates a season, locations, decisions, and decision destinations.
         """
+        if self.metadata is None:
+            raise ValueError("Must call parse_twee_file before insert_story")
 
         # First create a dict of passage name to uuid
         passage_uuids: dict[str, UUID] = {}
@@ -135,12 +153,14 @@ class ImportTwine(Import):
         decisions: list[Decision] = []
         decision_destinations: list[DecisionDestination] = []
         self.season_id = uuid4()
+
         season = Season(
             id=self.season_id,
             name=self.story_title,
-            genesis_location_id=genesis_location_id,
+            # don't set genesis_location_id here, due to the fk constraint we need to set it after the locations are inserted
             default=False,
             date_created=datetime.now(timezone.utc),
+            origin_file=self.filename,
         )
 
         for passage in self.passages:
@@ -183,6 +203,11 @@ class ImportTwine(Import):
             db_session.execute(
                 insert(DecisionDestination),
                 [dest.__dict__ for dest in decision_destinations],
+            )
+            db_session.execute(
+                update(Season)
+                .where(Season.id == self.season_id)
+                .values(genesis_location_id=genesis_location_id)
             )
 
     def __str__(self):
