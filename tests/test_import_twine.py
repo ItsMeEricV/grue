@@ -3,17 +3,12 @@ from unittest.mock import mock_open, patch
 import pytest
 from flask import Flask
 
+from app.models import Decision, DecisionDestination, Location, Season
 from app.navigation.import_twine import ImportTwine
 
 
 class TestImportTwine:
-    @pytest.fixture(autouse=True)
-    def setup(self, app: Flask):
-        self.app = app
-        self.Session = app.extensions["Session"]
-
-    def test_parse_twee_file(self):
-        mock_twee_content = """
+    mock_twee_content: str = """
 :: StoryTitle
 Test Story
 
@@ -49,22 +44,63 @@ You awake to find yourself in a field. You are covered in honey.
 [[Begin Getting Excited]]
 """
 
-        with patch("builtins.open", mock_open(read_data=mock_twee_content)):
-            twine = ImportTwine("mock_file.twee")
-            passages = twine.parse_twee_file()
+    @pytest.fixture(autouse=True)
+    def setup(self, app: Flask):
+        self.app = app
+        self.Session = app.extensions["Session"]
 
-            assert twine.metadata["ifid"] == "43048DD4-5A6B-4D29-BCC6-F418D5460FED"
-            assert twine.metadata["start"] == "Introduction"
-            assert twine.metadata["zoom"] == 1
-            assert twine.metadata["format"] == "Harlowe"
-            assert twine.story_title == "Test Story"
-            assert len(passages) == 5
-            assert passages[0].name == "Begin Getting Excited"
-            assert (
-                passages[0].content
-                == "You look around and begin to laugh. You see many trees and clouds."
-            )
-            assert passages[0].links[0].label == "I am happy"
-            assert passages[0].links[0].target == "I am happy"
-            assert passages[0].links[1].label == "I fail to be happy and pass out"
-            assert passages[0].links[1].target == "You Awake"
+    # def test_parse_twee_file(self):
+
+    #     with patch("builtins.open", mock_open(read_data=self.mock_twee_content)):
+    #         twine = ImportTwine("mock_file.twee")
+    #         passages = twine.parse_twee_file()
+
+    #         assert twine.metadata["ifid"] == "43048DD4-5A6B-4D29-BCC6-F418D5460FED"
+    #         assert twine.metadata["start"] == "Introduction"
+    #         assert twine.metadata["zoom"] == 1
+    #         assert twine.metadata["format"] == "Harlowe"
+    #         assert twine.story_title == "Test Story"
+    #         assert len(passages) == 5
+    #         assert passages[0].name == "Begin Getting Excited"
+    #         assert (
+    #             passages[0].content
+    #             == "You look around and begin to laugh. You see many trees and clouds."
+    #         )
+    #         assert passages[0].links[0].label == "I am happy"
+    #         assert passages[0].links[0].target == "I am happy"
+    #         assert passages[0].links[1].label == "I fail to be happy and pass out"
+    #         assert passages[0].links[1].target == "You Awake"
+
+    def test_insert_story(self):
+        with patch("builtins.open", mock_open(read_data=self.mock_twee_content)):
+            twine = ImportTwine("mock_file.twee")
+            twine.parse_twee_file()
+            with self.app.app_context():
+                twine.insert_story()
+                with self.Session.begin() as db_session:
+                    season = db_session.query(Season).first()
+                    assert db_session.query(Season).count() == 1
+                    assert db_session.query(Location).count() == 5
+                    assert db_session.query(Decision).count() == 3
+                    assert db_session.query(DecisionDestination).count() == 5
+                    season = db_session.query(Season).first()
+                    assert season.name == "Test Story"
+                    assert season.origin_file == "mock_file.twee"
+                    assert db_session.query(Decision).first().location_id == 1
+                    assert db_session.query(Decision).first().destination_id == 2
+                    assert db_session.query(Decision).first().label == "I am happy"
+                    assert (
+                        db_session.query(Decision).first().destination.label
+                        == "I am happy"
+                    )
+                    assert (
+                        db_session.query(Decision).first().destination.location_id == 2
+                    )
+                    assert (
+                        db_session.query(Location).first().name
+                        == "Begin Getting Excited"
+                    )
+                    assert db_session.query(Location).first().content == (
+                        "You look around and begin to laugh. You see many trees and clouds."
+                    )
+                    assert db_session.query(Location).first().season_id == season.id

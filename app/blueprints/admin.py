@@ -57,17 +57,9 @@ def upload_file():
         filename = f"{int(time.time())}_{filename}"
         filename = os.path.join(UPLOAD_FOLDER, filename)
         file.save(filename)
-        id = SeasonStore.create_season(season_name, file.filename)
-        twine_data = ImportTwine(filename).parse_twee_file()
-        print(twine_data)
-        # print(f"Metadata: {twine_data[1]}")
-        # print(f"Start Passage: {twine_data[1].get('start')}")
-        # print("Passages:")
-        # for passage in twine_data[0]:
-        #     print(f"Title: {passage['title']}")
-        #     print(f"Metadata: {passage['metadata']}")
-        #     print(f"Content: {passage['content']}")
-        #     print("-----")
+        twine = ImportTwine(filename)
+        twine.parse_twee_file()
+        twine.insert_story()
 
         print("File successfully uploaded")
         return redirect(url_for("admin.seasons"))
