@@ -205,6 +205,9 @@ class Decision(Base):
 # Association table for the many-to-many relationship
 class DecisionDestination(Base):
     __tablename__ = "decision_destinations"
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     decision_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey(
@@ -230,11 +233,12 @@ class DecisionDestination(Base):
         # Ensure there is only ever a single position for a location
         # For example, if a location has two decisions, the positions should be 0 and 1
         UniqueConstraint(
+            "decision_id",
             "destination_location_id",
             "position",
-            name="destionation_location_position_unique",
+            name="destination_location_position_unique",
         ),
     )
 
     def __repr__(self) -> str:
-        return f"<DecisionDestination(decision_id={self.decision_id}, destination_location_id={self.destination_location_id}, description={self.description}, position={self.position})>"
+        return f"<DecisionDestination(id={self.id}, decision_id={self.decision_id}, destination_location_id={self.destination_location_id}, description={self.description}, position={self.position})>"
