@@ -81,15 +81,12 @@ class ImportTwine(Import):
             match = match.strip()
             lines = match.split("\n")
             first = lines[0]
-            print(lines)
 
             # first line might be empty
             if len(first) == 0:
                 continue
             # store the story title
             elif first == "StoryTitle":
-                print("in story title!!!")
-                print(lines)
                 self.story_title = lines[1]
                 continue
             # store the story metadata
@@ -100,6 +97,7 @@ class ImportTwine(Import):
                         m, object_hook=lambda d: HarloweMetadata(**d)
                     )
                 except json.JSONDecodeError as e:
+                    # TODO: log this error
                     print(f"Error decoding JSON for StoryData: {e}")
                     raise json.JSONDecodeError(
                         "Error decoding JSON for StoryData", e.doc, e.pos
