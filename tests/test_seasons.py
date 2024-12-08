@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone
 
 import pytest
 from flask import Flask
@@ -22,7 +23,7 @@ class TestSeasonStore:
                 name="Season 1",
                 genesis_location_id=uuid.uuid4(),
                 default=True,
-                version=1,
+                date_created=datetime.now(tz=timezone.utc),
             )
 
             with self.Session.begin() as db_session:
@@ -33,6 +34,7 @@ class TestSeasonStore:
 
             # Assert the result
             assert season.id == id
+            assert season.default == True
 
     def test_get_current_season_no_default_set(self):
         with self.app.app_context():
@@ -43,7 +45,7 @@ class TestSeasonStore:
                 name="Season 2",
                 genesis_location_id=uuid.uuid4(),
                 default=False,
-                version=2,
+                date_created=datetime.now(tz=timezone.utc),
             )
 
             with self.Session.begin() as db_session:

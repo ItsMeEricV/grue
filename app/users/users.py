@@ -39,11 +39,11 @@ class UserStore:
         Returns:
             list[User]: A list of all users
         """
-        db_session = get_db_session()
-        users: Sequence[User] = (
-            db_session.execute(select(User).order_by(User.username)).scalars().all()
-        )
-        db_session.close()
+        Session = current_app.extensions["Session"]
+        with Session() as db_session:
+            users: Sequence[User] = (
+                db_session.execute(select(User).order_by(User.username)).scalars().all()
+            )
         return list(users)
 
     @staticmethod

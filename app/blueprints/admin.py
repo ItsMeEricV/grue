@@ -1,8 +1,10 @@
 import os
+import time
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, redirect, render_template, request, url_for
 from werkzeug.utils import secure_filename
 
+from ..navigation.import_twine import ImportTwine
 from ..seasons.seasons import SeasonStore
 from ..users.users import UserStore
 
@@ -44,13 +46,20 @@ def upload_file():
     if "file" not in request.files:
         print("No file part")
         return redirect(request.url)
+
     file = request.files["file"]
     if file.filename == "":
         print("No selected file")
         return redirect(request.url)
     if file and file.filename and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join(UPLOAD_FOLDER, filename))
+        filename_with_ts = f"{int(time.time())}_{filename}"
+        filepath = os.path.join(UPLOAD_FOLDER, filename_with_ts)
+        file.save(filepath)
+        twine = ImportTwine(filepath, file.filename)
+        twine.parse_twee_file()
+        twine.insert_story()
+
         print("File successfully uploaded")
         return redirect(url_for("admin.seasons"))
     else:

@@ -1,3 +1,4 @@
+import datetime
 import uuid
 
 from sqlalchemy import (
@@ -10,7 +11,7 @@ from sqlalchemy import (
     UniqueConstraint,
     and_,
 )
-from sqlalchemy.dialects.postgresql import TEXT, UUID, VARCHAR
+from sqlalchemy.dialects.postgresql import TEXT, TIMESTAMP, UUID, VARCHAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -55,9 +56,10 @@ class Season(Base):
     default: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false"
     )
-    version: Mapped[int] = mapped_column(
-        Integer, autoincrement=True, nullable=False, default=1, server_default="1"
+    date_created: Mapped[datetime.datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False, server_default="now()"
     )
+    origin_file: Mapped[str] = mapped_column(VARCHAR(2048), nullable=True)
 
     # relationships
     genesis_location: Mapped["Location"] = relationship(
@@ -87,6 +89,9 @@ class Season(Base):
             postgresql_where=and_(default == True, genesis_location_id != None),
         ),
     )
+
+    def __repr__(self) -> str:
+        return f"<Season(id={self.id}, name={self.name}, genesis_location_id={self.genesis_location_id}, default={self.default}, date_created={self.date_created})>"
 
 
 class UserLocation(Base):
@@ -200,6 +205,9 @@ class Decision(Base):
 # Association table for the many-to-many relationship
 class DecisionDestination(Base):
     __tablename__ = "decision_destinations"
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
     decision_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey(
@@ -225,11 +233,12 @@ class DecisionDestination(Base):
         # Ensure there is only ever a single position for a location
         # For example, if a location has two decisions, the positions should be 0 and 1
         UniqueConstraint(
+            "decision_id",
             "destination_location_id",
             "position",
-            name="destionation_location_position_unique",
+            name="destination_location_position_unique",
         ),
     )
 
     def __repr__(self) -> str:
-        return f"<DecisionDestination(decision_id={self.decision_id}, destination_location_id={self.destination_location_id}, description={self.description}, position={self.position})>"
+        return f"<DecisionDestination(id={self.id}, decision_id={self.decision_id}, destination_location_id={self.destination_location_id}, description={self.description}, position={self.position})>"
