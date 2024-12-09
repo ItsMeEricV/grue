@@ -3,6 +3,16 @@
 {% block admin_content %}
 <h2>Season management</h2>
 
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div class="alert alert-info" role="alert">
+	{% for message in messages %}
+	<p>{{ message }}</p>
+	{% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
 <form action="{{ url_for('admin.upload_file') }}" method="post" enctype="multipart/form-data">
 	<div class="form-group">
 		<label for="file">Upload a new season</label>
@@ -22,6 +32,7 @@
 			<th>Date created</th>
 			<th>Location Count</th>
 			<th>Origin File</th>
+			<th>Actions</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -39,10 +50,46 @@
 			<td><span class="datetime" data-datetime="{{ season.date_created.isoformat() }}"></span></td>
 			<td>{{ location_count }}</td>
 			<td>{{ season.origin_file }}</td>
+			<td>
+				<div class="dropdown">
+					<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton"
+						data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						Actions
+					</button>
+					<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+						<a class="dropdown-item" href="#"
+							onclick="confirmAction('delete', '{{ url_for('admin.delete_season', season_id=season.id) }}')">Delete</a>
+						<a class="dropdown-item" href="#"
+							onclick="confirmAction('make_default', '{{ url_for('admin.make_default', season_id=season.id) }}')">Make
+							default</a>
+					</div>
+				</div>
+			</td>
 		</tr>
 		{% endfor %}
 	</tbody>
 </table>
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="confirmationModalLabel"
+	aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="confirmationModalLabel">Confirm Action</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				Are you sure you want to <span id="actionType"></span> this season?
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+				<a id="confirmButton" class="btn btn-primary" href="#">Confirm</a>
+			</div>
+		</div>
+	</div>
+</div>
 
 <script>
 	function validateForm() {
@@ -53,6 +100,20 @@
 		} else {
 			submitButton.disabled = true;
 		}
+	}
+
+	function confirmAction(action, url) {
+		const actionType = document.getElementById('actionType');
+		const confirmButton = document.getElementById('confirmButton');
+		actionType.textContent = action === 'delete' ? 'delete' : 'make default';
+		confirmButton.onclick = function () {
+			const form = document.createElement('form');
+			form.method = 'POST';
+			form.action = url;
+			document.body.appendChild(form);
+			form.submit();
+		};
+		$('#confirmationModal').modal('show');
 	}
 
 	document.addEventListener('DOMContentLoaded', function () {

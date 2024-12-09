@@ -32,8 +32,7 @@ class User(Base):
 
     # One-to-many relationship: one user can have many user_locations
     user_locations: Mapped[list["UserLocation"]] = relationship(
-        "UserLocation",
-        back_populates="user",
+        "UserLocation", back_populates="user", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:
@@ -73,12 +72,12 @@ class Season(Base):
         back_populates="season",
         foreign_keys="[Location.season_id]",
         primaryjoin="Location.season_id == Season.id",
+        cascade="all, delete-orphan",
     )
 
     # One-to-many relationship: one season can have many user_locations
     user_seasons: Mapped[list["UserLocation"]] = relationship(
-        "UserLocation",
-        back_populates="season",
+        "UserLocation", back_populates="season", cascade="all, delete-orphan"
     )
 
     __table_args__ = (
@@ -147,6 +146,7 @@ class Location(Base):
         "Decision",
         back_populates="source_location",
         foreign_keys="[Decision.source_location_id]",
+        cascade="all, delete-orphan",
     )
 
     # Many-to-many relationship: one location can be the destination for many decisions
@@ -160,8 +160,7 @@ class Location(Base):
 
     # One-to-many relationship: one location can have many user_locations
     user_locations: Mapped[list["UserLocation"]] = relationship(
-        "UserLocation",
-        back_populates="location",
+        "UserLocation", back_populates="location", cascade="all, delete-orphan"
     )
 
     __table_args__ = (Index("ix_locations_season_id", "season_id"),)
@@ -186,7 +185,9 @@ class Decision(Base):
 
     # One-to-many relationship: a decision has one source location
     source_location: Mapped["Location"] = relationship(
-        "Location", back_populates="source_decisions", foreign_keys=[source_location_id]
+        "Location",
+        back_populates="source_decisions",
+        foreign_keys=[source_location_id],
     )
 
     # Many-to-many relationship to Location via decision_destinations association table
