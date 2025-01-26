@@ -46,12 +46,32 @@ class Import:
 
 
 class ImportTwine(Import):
+    """
+    Handles importing and parsing of Twine story files in Twee format.
+
+    This class reads a Twee file, extracts the story title, metadata, and passages,
+    and creates the necessary database records to represent the story structure.
+
+    Attributes:
+        story_title (str): The title of the Twine story
+        metadata (HarloweMetadata | None): Story metadata in Harlowe format
+        passages (list[TwinePassage]): List of passages making up the story
+        season_id (UUID): Unique identifier for this imported story/season
+    """
+
     story_title: str
     metadata: HarloweMetadata | None
     passages: list[TwinePassage] = []
     season_id: UUID
 
     def __init__(self, filepath: str, filename: str):
+        """
+        Initialize a new Twine story import.
+
+        Args:
+            filepath (str): Path to the Twee file to import
+            filename (str): Original filename of the Twee file
+        """
         super().__init__(filepath, filename)
         self.story_title: str = ""
         self.metadata = None
@@ -62,12 +82,22 @@ class ImportTwine(Import):
         """
         Parses a Twee file and extracts passage content and connections.
 
+        This method reads the Twee file and parses out:
+        - Story title
+        - Story metadata (must be Harlowe format)
+        - Individual passages and their links to other passages
+
         Args:
             file_path: Path to the Twee file.
 
         Returns:
             A dictionary where keys are passage names and values are tuples containing
             the passage content and a list of links to other passages.
+
+        Raises:
+            json.JSONDecodeError: If story metadata is invalid JSON
+            TypeError: If story metadata doesn't match expected format
+            ValueError: If story format is not Harlowe
         """
 
         with open(self.filepath, "r", encoding="utf-8") as file:
